@@ -1,0 +1,94 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  6
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+height		10;
+radius		1;
+
+radiusO2			#calc "$radius / 2.0";
+negRadiusO2			#calc "-$radiusO2";
+arcIntermediate		#calc "$radius * 0.7071068";
+negArcIntermediate	#calc "-$arcIntermediate";	
+
+vertices
+(
+    ($negRadiusO2 0 $radiusO2)
+    ($radiusO2 0 $radiusO2)
+    ($radiusO2 0 $negRadiusO2)
+	($negRadiusO2 0 $negRadiusO2)
+	($negRadiusO2 $height $radiusO2)
+	($radiusO2 $height $radiusO2)
+	($radiusO2 $height $negRadiusO2)
+	($negRadiusO2 $height $negRadiusO2)
+);
+
+horizontalDiv	20;
+//verticalDiv		#calc "std::floor($horizontalDiv * $height / $radius / 2.0)";
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($horizontalDiv $horizontalDiv $horizontalDiv) simpleGrading (1 1 1)
+);
+
+edges
+(
+	arc 0 1 (0 0 $arcIntermediate)
+	arc 1 2 ($arcIntermediate 0 0)
+	arc 2 3 (0 0 $negArcIntermediate)
+	arc 3 0 ($negArcIntermediate 0 0)
+	arc 4 5 (0 $height $ arcIntermediate)
+	arc 5 6 ($arcIntermediate $height 0)
+	arc 6 7 (0 $height $negArcIntermediate)
+	arc 7 4 ($negArcIntermediate $height 0)
+);
+
+boundary
+(
+    pipeWalls
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+			(0 3 7 4)
+			(2 1 5 6)
+			(2 3 7 6)
+        );
+    }
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (4 5 6 7)
+        );
+    }
+	inlet
+	{
+		type patch;
+		faces
+		(
+			(0 1 2 3)
+		);
+	}
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
